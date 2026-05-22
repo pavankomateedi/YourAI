@@ -1,0 +1,43 @@
+{
+  "fixture_id": "F-006",
+  "fixture_file": "tests/fixtures/golden/F-006_low_confidence_entity.txt",
+  "description": "Low-confidence ambiguous first name 'John' \u2014 must trigger redaction",
+  "entities": [
+    {
+      "entity_type": "PII_NAME",
+      "original_value": "John",
+      "start_char": 35,
+      "end_char": 39,
+      "expected_confidence_min": 0.0,
+      "expected_confidence_max": 0.6
+    },
+    {
+      "entity_type": "PHI_MEDICATION",
+      "original_value": "Metformin 500mg",
+      "start_char": 107,
+      "end_char": 122,
+      "expected_confidence_min": 0.85
+    },
+    {
+      "entity_type": "PHI_MRN",
+      "original_value": "MRN-7293847",
+      "start_char": 129,
+      "end_char": 140,
+      "expected_confidence_min": 0.8
+    },
+    {
+      "entity_type": "PII_NAME",
+      "original_value": "Dr. Eleanor Hartwell",
+      "start_char": 141,
+      "end_char": 161,
+      "expected_confidence_min": 0.85
+    }
+  ],
+  "redaction_assertions": [
+    {
+      "entity_value": "John",
+      "expected_output": "[REDACTED]",
+      "reason": "confidence_below_threshold"
+    }
+  ]
+}

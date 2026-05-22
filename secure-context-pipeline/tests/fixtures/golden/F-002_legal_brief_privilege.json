@@ -1,0 +1,63 @@
+{
+  "fixture_id": "F-002",
+  "fixture_file": "tests/fixtures/golden/F-002_legal_brief_privilege.txt",
+  "description": "Privileged legal memo with client identity and case strategy",
+  "entities": [
+    {
+      "entity_type": "PII_NAME",
+      "original_value": "Marcus R. Webb",
+      "start_char": 100,
+      "end_char": 114,
+      "expected_confidence_min": 0.85
+    },
+    {
+      "entity_type": "LEGAL_CLIENT",
+      "original_value": "Martinez Family Trust",
+      "start_char": 143,
+      "end_char": 164,
+      "expected_confidence_min": 0.75
+    },
+    {
+      "entity_type": "PII_NAME",
+      "original_value": "Priya Okonkwo",
+      "start_char": 298,
+      "end_char": 311,
+      "expected_confidence_min": 0.85
+    },
+    {
+      "entity_type": "PII_SSN",
+      "original_value": "987-12-3456",
+      "start_char": 318,
+      "end_char": 329,
+      "expected_confidence_min": 0.95
+    },
+    {
+      "entity_type": "LEGAL_STRATEGY",
+      "original_value": "settle at no less than $2.4 million",
+      "start_char": 409,
+      "end_char": 444,
+      "expected_confidence_min": 0.7
+    },
+    {
+      "entity_type": "PII_EMAIL",
+      "original_value": "priya.okonkwo@martinez-trust.example.com",
+      "start_char": 745,
+      "end_char": 785,
+      "expected_confidence_min": 0.99
+    },
+    {
+      "entity_type": "PII_PHONE",
+      "original_value": "(415) 555-0293",
+      "start_char": 789,
+      "end_char": 803,
+      "expected_confidence_min": 0.95
+    },
+    {
+      "entity_type": "LEGAL_CLIENT",
+      "original_value": "Martinez Family Trust",
+      "start_char": 252,
+      "end_char": 273,
+      "expected_confidence_min": 0.75
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+services:
+  app:
+    build: .
+    image: secure-context-pipeline
+    # Mount the source so edits are reflected without rebuilding.
+    volumes:
+      - .:/app
+    # Pass secrets/config from a local .env (not committed). Optional — the
+    # pipeline runs offline with an echo-mock LLM when no key is present.
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      VAULT_DB_PATH: /app/data/vault.db
+      STORE_DB_PATH_DIR: /app/data/documents
+      AUDIT_LOG_PATH: /app/data/audit.jsonl
+    # Default command runs the test suite; override for the demo:
+    #   docker compose run --rm app python demo.py
+    command: ["pytest", "tests/", "-v"]

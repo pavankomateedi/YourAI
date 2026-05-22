@@ -1,0 +1,74 @@
+{
+  "fixture_id": "F-007",
+  "fixture_file": "tests/fixtures/golden/F-007_llm_response_deobfuscation.json",
+  "description": "LLM response de-obfuscation ground truth cases",
+  "entities": [],
+  "session_vault_state": {
+    "[PII_NAME_a3f2c1d4]": "Dr. Eleanor Hartwell",
+    "[PII_SSN_b7e2a1c3]": "543-67-8901",
+    "[PII_DOB_c9d3e4f5]": "March 14, 1972",
+    "[PHI_DIAGNOSIS_2c8a4d7b]": "Type 2 Diabetes Mellitus",
+    "[PHI_MEDICATION_9f1a3e2b]": "Metformin 500mg",
+    "[PHI_MRN_5e8b2d1a]": "MRN-7293847",
+    "[FIN_ACCOUNT_4d7c9a1e]": "4532-1234-5678-9012"
+  },
+  "test_cases": [
+    {
+      "case_id": "TC-001",
+      "description": "Simple token restoration — all tokens echoed by LLM",
+      "llm_response": "Patient [PII_NAME_a3f2c1d4] (MRN: [PHI_MRN_5e8b2d1a]) has a diagnosis of [PHI_DIAGNOSIS_2c8a4d7b] and is prescribed [PHI_MEDICATION_9f1a3e2b].",
+      "expected_output": "Patient Dr. Eleanor Hartwell (MRN: MRN-7293847) has a diagnosis of Type 2 Diabetes Mellitus and is prescribed Metformin 500mg.",
+      "expected_tokens_restored": 4,
+      "expected_tokens_missed": 0
+    },
+    {
+      "case_id": "TC-002",
+      "description": "Possessive inflection — [PII_NAME_a3f2c1d4]'s",
+      "llm_response": "[PII_NAME_a3f2c1d4]'s diagnosis of [PHI_DIAGNOSIS_2c8a4d7b] was confirmed on [PII_DOB_c9d3e4f5].",
+      "expected_output": "Dr. Eleanor Hartwell's diagnosis of Type 2 Diabetes Mellitus was confirmed on March 14, 1972.",
+      "expected_tokens_restored": 3,
+      "expected_tokens_missed": 0
+    },
+    {
+      "case_id": "TC-003",
+      "description": "Vault miss — token not in vault",
+      "llm_response": "The patient [PII_NAME_FFFFFFFF] should follow up with [PII_NAME_a3f2c1d4].",
+      "expected_output": "The patient [UNAVAILABLE] should follow up with Dr. Eleanor Hartwell.",
+      "expected_tokens_restored": 1,
+      "expected_tokens_missed": 1,
+      "vault_miss_tokens": ["[PII_NAME_FFFFFFFF]"]
+    },
+    {
+      "case_id": "TC-004",
+      "description": "Non-PII text preservation — surrounding text must be unchanged",
+      "llm_response": "The patient [PII_NAME_a3f2c1d4] has shown improvement. Blood pressure is 120/80 mmHg. Follow-up in 3 weeks.",
+      "expected_output": "The patient Dr. Eleanor Hartwell has shown improvement. Blood pressure is 120/80 mmHg. Follow-up in 3 weeks.",
+      "expected_tokens_restored": 1,
+      "expected_tokens_missed": 0
+    },
+    {
+      "case_id": "TC-005",
+      "description": "Multiple tokens of same type in one response",
+      "llm_response": "Account [FIN_ACCOUNT_4d7c9a1e] belongs to [PII_NAME_a3f2c1d4] (SSN: [PII_SSN_b7e2a1c3]).",
+      "expected_output": "Account 4532-1234-5678-9012 belongs to Dr. Eleanor Hartwell (SSN: 543-67-8901).",
+      "expected_tokens_restored": 3,
+      "expected_tokens_missed": 0
+    },
+    {
+      "case_id": "TC-006",
+      "description": "Response with zero tokens — no PII in LLM output",
+      "llm_response": "The patient's blood pressure reading is within normal range. No further action is required at this time.",
+      "expected_output": "The patient's blood pressure reading is within normal range. No further action is required at this time.",
+      "expected_tokens_restored": 0,
+      "expected_tokens_missed": 0
+    },
+    {
+      "case_id": "TC-007",
+      "description": "Token at start and end of response",
+      "llm_response": "[PII_NAME_a3f2c1d4] was the subject of this assessment. All records are stored under [PHI_MRN_5e8b2d1a].",
+      "expected_output": "Dr. Eleanor Hartwell was the subject of this assessment. All records are stored under MRN-7293847.",
+      "expected_tokens_restored": 2,
+      "expected_tokens_missed": 0
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "fixture_id": "F-009",
+  "fixture_file": "tests/fixtures/golden/F-009_adjacent_entities.txt",
+  "description": "Pairs of PII entities within 3 chars \u2014 must not merge into one span",
+  "entities": [
+    {
+      "entity_type": "PII_NAME",
+      "original_value": "John Smith",
+      "start_char": 92,
+      "end_char": 102,
+      "expected_confidence_min": 0.85
+    },
+    {
+      "entity_type": "PII_SSN",
+      "original_value": "943-67-8901",
+      "start_char": 109,
+      "end_char": 120,
+      "expected_confidence_min": 0.95
+    },
+    {
+      "entity_type": "PII_NAME",
+      "original_value": "Priya Okonkwo",
+      "start_char": 194,
+      "end_char": 207,
+      "expected_confidence_min": 0.85
+    },
+    {
+      "entity_type": "PII_EMAIL",
+      "original_value": "priya.okonkwo@example.org",
+      "start_char": 208,
+      "end_char": 233,
+      "expected_confidence_min": 0.99
+    },
+    {
+      "entity_type": "PII_NAME",
+      "original_value": "Dr. Amos Vega",
+      "start_char": 298,
+      "end_char": 311,
+      "expected_confidence_min": 0.85
+    },
+    {
+      "entity_type": "PII_NAME",
+      "original_value": "Dr. Sara Lund",
+      "start_char": 312,
+      "end_char": 325,
+      "expected_confidence_min": 0.85
+    }
+  ]
+}

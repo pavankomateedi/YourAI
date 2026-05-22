@@ -1,0 +1,85 @@
+{
+  "fixture_id": "F-003",
+  "fixture_file": "tests/fixtures/golden/F-003_financial_disclosure.txt",
+  "description": "Financial disclosure \u2014 multiple accounts, DOB, tax ID, repeated account refs",
+  "entities": [
+    {
+      "entity_type": "PII_NAME",
+      "original_value": "Raj Patel",
+      "start_char": 42,
+      "end_char": 51,
+      "expected_confidence_min": 0.85
+    },
+    {
+      "entity_type": "PII_DOB",
+      "original_value": "September 7, 1968",
+      "start_char": 67,
+      "end_char": 84,
+      "expected_confidence_min": 0.9
+    },
+    {
+      "entity_type": "FIN_TAX_ID",
+      "original_value": "EIN): 23-4567890",
+      "start_char": 93,
+      "end_char": 109,
+      "expected_confidence_min": 0.85
+    },
+    {
+      "entity_type": "FIN_ACCOUNT",
+      "original_value": "4111-2222-3333-4444",
+      "start_char": 127,
+      "end_char": 146,
+      "expected_confidence_min": 0.9
+    },
+    {
+      "entity_type": "FIN_ACCOUNT",
+      "original_value": "SAVINGS-77-8812345",
+      "start_char": 166,
+      "end_char": 184,
+      "expected_confidence_min": 0.8
+    },
+    {
+      "entity_type": "FIN_ACCOUNT",
+      "original_value": "4111-2222-3333-4444",
+      "start_char": 243,
+      "end_char": 262,
+      "expected_confidence_min": 0.9
+    },
+    {
+      "entity_type": "FIN_ACCOUNT",
+      "original_value": "4111-2222-3333-4444",
+      "start_char": 313,
+      "end_char": 332,
+      "expected_confidence_min": 0.9
+    },
+    {
+      "entity_type": "PII_EMAIL",
+      "original_value": "raj.patel.advisor@example-finance.com",
+      "start_char": 422,
+      "end_char": 459,
+      "expected_confidence_min": 0.99
+    },
+    {
+      "entity_type": "PII_PHONE",
+      "original_value": "(713) 555-0384",
+      "start_char": 468,
+      "end_char": 482,
+      "expected_confidence_min": 0.95
+    },
+    {
+      "entity_type": "PII_ADDRESS",
+      "original_value": "9102 Westwood Boulevard, Houston, TX 77001",
+      "start_char": 497,
+      "end_char": 539,
+      "expected_confidence_min": 0.85
+    }
+  ],
+  "idempotency_assertions": [
+    {
+      "entities_with_same_value": [
+        "4111-2222-3333-4444"
+      ],
+      "expected_behavior": "all_occurrences_map_to_same_token"
+    }
+  ]
+}

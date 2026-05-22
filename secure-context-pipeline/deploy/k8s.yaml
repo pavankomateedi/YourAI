@@ -1,0 +1,88 @@
+# Kubernetes manifests for the Secure Context Pipeline HTTP service.
+# Apply with:  kubectl apply -f deploy/k8s.yaml
+# Build/push the image first (see Dockerfile) and set `image:` below.
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: scp-secrets
+type: Opaque
+stringData:
+  # Fill these from your secret manager / CI — DO NOT commit real values.
+  ANTHROPIC_API_KEY: ""        # live LLM (optional; mock used if empty)
+  SERVICE_API_KEY: "change-me" # required X-API-Key for the service
+  DATABASE_URL: ""             # postgres DSN when VAULT_BACKEND=postgres
+  SCP_KEK: ""                  # base64 32-byte KEK when KEY_WRAPPING=local
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: scp-config
+data:
+  SCP_ENV: "production"          # fail closed on missing master key
+  LLM_PROVIDER: "anthropic"
+  LLM_MODEL: "claude-3-5-sonnet-20241022"
+  VAULT_BACKEND: "postgres"
+  KEY_WRAPPING: "local"          # or "kms" with IRSA + KMS_KEY_ID
+  STORE_ENCRYPTION_KEY_PATH: "/secrets/master.key"
+  CONFIDENCE_THRESHOLD: "0.60"
+  AUDIT_LOG_PATH: "/data/audit.jsonl"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: secure-context-pipeline
+  labels: { app: secure-context-pipeline }
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: secure-context-pipeline }
+  template:
+    metadata:
+      labels: { app: secure-context-pipeline }
+    spec:
+      containers:
+        - name: api
+          image: secure-context-pipeline:2.0.0  # replace with your registry path
+          command:
+            - gunicorn
+            - secure_context_pipeline.api.app:app
+            - -k
+            - uvicorn.workers.UvicornWorker
+            - -b
+            - 0.0.0.0:8000
+            - --workers
+            - "4"
+            - --timeout
+            - "60"
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef: { name: scp-config }
+            - secretRef: { name: scp-secrets }
+          readinessProbe:
+            httpGet: { path: /health, port: 8000 }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /health, port: 8000 }
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            requests: { cpu: "500m", memory: "1Gi" }
+            limits: { cpu: "2", memory: "2Gi" }
+          securityContext:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: secure-context-pipeline
+spec:
+  selector: { app: secure-context-pipeline }
+  ports:
+    - port: 80
+      targetPort: 8000
+  type: ClusterIP

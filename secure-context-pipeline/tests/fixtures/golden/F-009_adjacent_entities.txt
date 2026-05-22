@@ -1,0 +1,10 @@
+ADJACENT ENTITY TEST CASES
+
+Case 1 — Name followed immediately by SSN in parentheses:
+Name: John Smith (SSN: 943-67-8901)
+
+Case 2 — Email directly after name with no space, colon only:
+Contact: Priya Okonkwo:priya.okonkwo@example.org
+
+Case 3 — Two names separated by a slash:
+Attending/Consulting: Dr. Amos Vega/Dr. Sara Lund

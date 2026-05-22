@@ -1,0 +1,21 @@
+PATIENT RECORD — CONFIDENTIAL
+==============================
+
+Patient Name: Dr. Eleanor Hartwell
+Social Security Number: 543-67-8901
+Date of Birth: March 14, 1972
+Home Address: 2847 Lakeview Drive, Austin, TX 78701
+Contact Email: eleanor.hartwell@example-clinic.org
+Phone Number: (512) 555-0147
+
+CLINICAL INFORMATION
+Medical Record Number: MRN-7293847
+Insurance ID: BCBS-TX-0042-8837291
+Primary Diagnosis: Type 2 Diabetes Mellitus
+Current Medication: Metformin 500mg (twice daily with meals)
+Latest Lab Result: HbA1c: 8.2% — above target of 7.0%
+
+FINANCIAL & LEGAL INFORMATION
+Billing Account: 4532-1234-5678-9012
+Tax Identification: EIN: 74-1234567
+Legal Representative: Martinez Family Trust

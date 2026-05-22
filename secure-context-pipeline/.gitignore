@@ -1,0 +1,34 @@
+# Secrets — never commit
+.env
+*.key
+data/master.key
+
+# Runtime data (encrypted blobs, vault, audit logs)
+data/
+*.db
+*.jsonl
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.mypy_cache/
+.pytest_cache/
+.benchmarks/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+
+# AWS deploy state/secrets
+deploy/aws/.terraform/
+*.tfstate
+*.tfstate.*
+deploy/aws/*.auto.tfvars
+deploy/aws/.terraform.lock.hcl

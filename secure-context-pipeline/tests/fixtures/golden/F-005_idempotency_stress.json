@@ -1,0 +1,119 @@
+{
+  "fixture_id": "F-005",
+  "fixture_file": "tests/fixtures/golden/F-005_idempotency_stress.txt",
+  "description": "Same name + SSN repeated 7 times \u2014 idempotency test",
+  "entities": [
+    {
+      "entity_type": "PII_NAME",
+      "original_value": "Dr. Eleanor Hartwell",
+      "start_char": 0,
+      "end_char": 20,
+      "expected_confidence_min": 0.85
+    },
+    {
+      "entity_type": "PII_SSN",
+      "original_value": "543-67-8901",
+      "start_char": 54,
+      "end_char": 65,
+      "expected_confidence_min": 0.95
+    },
+    {
+      "entity_type": "PII_NAME",
+      "original_value": "Dr. Eleanor Hartwell",
+      "start_char": 67,
+      "end_char": 87,
+      "expected_confidence_min": 0.85
+    },
+    {
+      "entity_type": "PII_SSN",
+      "original_value": "543-67-8901",
+      "start_char": 127,
+      "end_char": 138,
+      "expected_confidence_min": 0.95
+    },
+    {
+      "entity_type": "PII_NAME",
+      "original_value": "Dr. Eleanor Hartwell",
+      "start_char": 158,
+      "end_char": 178,
+      "expected_confidence_min": 0.85
+    },
+    {
+      "entity_type": "PII_SSN",
+      "original_value": "543-67-8901",
+      "start_char": 219,
+      "end_char": 230,
+      "expected_confidence_min": 0.95
+    },
+    {
+      "entity_type": "PII_NAME",
+      "original_value": "Dr. Eleanor Hartwell",
+      "start_char": 232,
+      "end_char": 252,
+      "expected_confidence_min": 0.85
+    },
+    {
+      "entity_type": "PII_SSN",
+      "original_value": "543-67-8901",
+      "start_char": 281,
+      "end_char": 292,
+      "expected_confidence_min": 0.95
+    },
+    {
+      "entity_type": "PII_NAME",
+      "original_value": "Dr. Eleanor Hartwell",
+      "start_char": 340,
+      "end_char": 360,
+      "expected_confidence_min": 0.85
+    },
+    {
+      "entity_type": "PII_SSN",
+      "original_value": "543-67-8901",
+      "start_char": 385,
+      "end_char": 396,
+      "expected_confidence_min": 0.95
+    },
+    {
+      "entity_type": "PII_NAME",
+      "original_value": "Dr. Eleanor Hartwell",
+      "start_char": 398,
+      "end_char": 418,
+      "expected_confidence_min": 0.85
+    },
+    {
+      "entity_type": "PII_SSN",
+      "original_value": "543-67-8901",
+      "start_char": 464,
+      "end_char": 475,
+      "expected_confidence_min": 0.95
+    },
+    {
+      "entity_type": "PII_NAME",
+      "original_value": "Dr. Eleanor Hartwell",
+      "start_char": 477,
+      "end_char": 497,
+      "expected_confidence_min": 0.85
+    },
+    {
+      "entity_type": "PII_SSN",
+      "original_value": "543-67-8901",
+      "start_char": 522,
+      "end_char": 533,
+      "expected_confidence_min": 0.95
+    }
+  ],
+  "idempotency_assertions": [
+    {
+      "entities_with_same_value": [
+        "Dr. Eleanor Hartwell"
+      ],
+      "expected_token_count": 1
+    },
+    {
+      "entities_with_same_value": [
+        "543-67-8901"
+      ],
+      "expected_token_count": 1
+    }
+  ]
+}

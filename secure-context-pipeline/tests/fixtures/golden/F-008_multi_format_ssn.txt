@@ -1,0 +1,6 @@
+SSN FORMAT VARIANT TEST
+
+Standard dash format: 912-34-5678
+Space-separated format: 923 45 6789
+No separator (compact): 934567890
+In a sentence: The patient's social security number is 945-67-8901 as listed on file.

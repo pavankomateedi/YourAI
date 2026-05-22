@@ -1,0 +1,105 @@
+{
+  "fixture_id": "F-001",
+  "fixture_file": "tests/fixtures/golden/F-001_medical_record_comprehensive.txt",
+  "description": "Comprehensive medical record \u2014 all 14 entity types",
+  "entities": [
+    {
+      "entity_type": "PII_NAME",
+      "original_value": "Dr. Eleanor Hartwell",
+      "start_char": 76,
+      "end_char": 96,
+      "expected_confidence_min": 0.85
+    },
+    {
+      "entity_type": "PII_SSN",
+      "original_value": "543-67-8901",
+      "start_char": 121,
+      "end_char": 132,
+      "expected_confidence_min": 0.95
+    },
+    {
+      "entity_type": "PII_DOB",
+      "original_value": "March 14, 1972",
+      "start_char": 148,
+      "end_char": 162,
+      "expected_confidence_min": 0.9
+    },
+    {
+      "entity_type": "PII_ADDRESS",
+      "original_value": "2847 Lakeview Drive, Austin, TX 78701",
+      "start_char": 177,
+      "end_char": 214,
+      "expected_confidence_min": 0.85
+    },
+    {
+      "entity_type": "PII_EMAIL",
+      "original_value": "eleanor.hartwell@example-clinic.org",
+      "start_char": 230,
+      "end_char": 265,
+      "expected_confidence_min": 0.99
+    },
+    {
+      "entity_type": "PII_PHONE",
+      "original_value": "(512) 555-0147",
+      "start_char": 280,
+      "end_char": 294,
+      "expected_confidence_min": 0.95
+    },
+    {
+      "entity_type": "PHI_MRN",
+      "original_value": "MRN-7293847",
+      "start_char": 340,
+      "end_char": 351,
+      "expected_confidence_min": 0.8
+    },
+    {
+      "entity_type": "PHI_INSURANCE_ID",
+      "original_value": "BCBS-TX-0042-8837291",
+      "start_char": 366,
+      "end_char": 386,
+      "expected_confidence_min": 0.8
+    },
+    {
+      "entity_type": "PHI_DIAGNOSIS",
+      "original_value": "Type 2 Diabetes Mellitus",
+      "start_char": 406,
+      "end_char": 430,
+      "expected_confidence_min": 0.85
+    },
+    {
+      "entity_type": "PHI_MEDICATION",
+      "original_value": "Metformin 500mg",
+      "start_char": 451,
+      "end_char": 466,
+      "expected_confidence_min": 0.85
+    },
+    {
+      "entity_type": "PHI_LAB_RESULT",
+      "original_value": "HbA1c: 8.2%",
+      "start_char": 511,
+      "end_char": 522,
+      "expected_confidence_min": 0.8
+    },
+    {
+      "entity_type": "FIN_ACCOUNT",
+      "original_value": "4532-1234-5678-9012",
+      "start_char": 594,
+      "end_char": 613,
+      "expected_confidence_min": 0.9
+    },
+    {
+      "entity_type": "FIN_TAX_ID",
+      "original_value": "EIN: 74-1234567",
+      "start_char": 634,
+      "end_char": 649,
+      "expected_confidence_min": 0.9
+    },
+    {
+      "entity_type": "LEGAL_CLIENT",
+      "original_value": "Martinez Family Trust",
+      "start_char": 672,
+      "end_char": 693,
+      "expected_confidence_min": 0.75
+    }
+  ]
+}

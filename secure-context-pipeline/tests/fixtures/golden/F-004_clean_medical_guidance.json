@@ -1,0 +1,11 @@
+{
+  "fixture_id": "F-004",
+  "fixture_file": "tests/fixtures/golden/F-004_clean_medical_guidance.txt",
+  "description": "No PII/PHI \u2014 negative detection test. General medical guidance only.",
+  "entities": [],
+  "expected_behavior": {
+    "detection": "empty_entity_list",
+    "obfuscation": "text_unchanged",
+    "pipeline": "completes_without_error"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "fixture_id": "F-008",
+  "fixture_file": "tests/fixtures/golden/F-008_multi_format_ssn.txt",
+  "description": "SSN in 4 format variants: dashes, spaces, no separator, embedded",
+  "entities": [
+    {
+      "entity_type": "PII_SSN",
+      "original_value": "912-34-5678",
+      "start_char": 47,
+      "end_char": 58,
+      "expected_confidence_min": 0.95
+    },
+    {
+      "entity_type": "PII_SSN",
+      "original_value": "923 45 6789",
+      "start_char": 83,
+      "end_char": 94,
+      "expected_confidence_min": 0.9
+    },
+    {
+      "entity_type": "PII_SSN",
+      "original_value": "934567890",
+      "start_char": 119,
+      "end_char": 128,
+      "expected_confidence_min": 0.75
+    },
+    {
+      "entity_type": "PII_SSN",
+      "original_value": "945-67-8901",
+      "start_char": 184,
+      "end_char": 195,
+      "expected_confidence_min": 0.95
+    }
+  ]
+}
