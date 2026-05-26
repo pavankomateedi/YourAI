@@ -35,7 +35,10 @@ from ..store.store import SecureDocumentStore
 def create_app():
     """Build and return the FastAPI application."""
     from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, UploadFile
+    from fastapi.responses import HTMLResponse
     from pydantic import BaseModel
+
+    from .ui import INDEX_HTML
 
     settings = get_settings()
     store = SecureDocumentStore()
@@ -63,6 +66,11 @@ def create_app():
         text: str | None = None
         document_id: str | None = None
         strategy: str | None = None
+
+    @app.get("/ui", response_class=HTMLResponse)
+    async def ui() -> str:
+        """Self-contained demo page (no auth; the key is entered in the browser)."""
+        return INDEX_HTML
 
     @app.get("/health")
     async def health() -> dict:
@@ -116,6 +124,10 @@ def create_app():
             "entities_obfuscated": result.entities_obfuscated,
             "tokens_restored": result.tokens_restored,
             "pipeline_duration_ms": result.pipeline_duration_ms,
+            # Trust-boundary observability (zero recoverable PII by design):
+            # exactly what was sent to the LLM, and its raw reply pre-restore.
+            "obfuscated_preview": result.obfuscated_preview,
+            "llm_raw_response": result.llm_raw_response,
         }
 
     return app

@@ -181,6 +181,8 @@ class SecureContextPipeline:
             tokens_restored=deob.tokens_restored,
             pipeline_duration_ms=(time.perf_counter() - start) * 1000,
             document_id=document_id,
+            obfuscated_preview=obfuscated_text,
+            llm_raw_response=raw_response,
         )
 
     # ----------------------------------------------------------- leak gate

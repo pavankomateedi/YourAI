@@ -72,7 +72,15 @@ PATTERNS: dict[str, list[re.Pattern[str]]] = {
             rf"\s*[A-Za-z. ]+,\s*[A-Z]{{2}}\s+\d{{5}}(?:-\d{{4}})?"
         )
     ],
-    "PHI_MRN": [re.compile(r"\b(?:MRN|PT)-\d+\b")],
+    "PHI_MRN": [
+        # Hyphenated form (e.g. ``MRN-7293847``, ``PT-1234``) — original golden form.
+        re.compile(r"\b(?:MRN|PT)-\d+\b"),
+        # Real records also write the label space/colon/hash separated
+        # (``MRN 884211``, ``MRN: 884211``, ``MRN# 884211``). Require 3+ digits so a
+        # stray ``MRN`` next to a small number can't false-fire. Captures the label
+        # too, matching the golden contract where ``original_value`` includes ``MRN-``.
+        re.compile(r"\bMRN[\s:#-]*\d{3,}\b"),
+    ],
     "PHI_INSURANCE_ID": [
         re.compile(rf"\b(?:{'|'.join(INSURANCE_CARRIERS)})-[A-Z0-9\-]+\b")
     ],

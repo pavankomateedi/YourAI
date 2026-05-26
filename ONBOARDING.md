@@ -41,6 +41,11 @@ detector fallback (everything still passes).
 - URL: `http://secure-context-pipeline-1965755421.us-east-1.elb.amazonaws.com`
   - Use **http** (no TLS listener) and a real path. Root `/` is 404 by design.
   - Swagger UI: **`/docs`** · status: **`/health`** · `/sessions`, `/run`, `/documents`.
+  - **Demo UX: `/ui`** — self-contained single-page trust-boundary demo (no build
+    step; HTML lives in `api/ui.py`, served same-origin so there's no CORS). Shows
+    Original → Sent-to-LLM (obfuscated) → LLM raw reply → Restored, with samples.
+  - `/run` returns two zero-PII observability fields used by the UI:
+    `obfuscated_preview` (exactly what crosses the boundary) and `llm_raw_response`.
   - Auth: `X-API-Key` header (value in `deploy/aws/secrets.auto.tfvars`).
 - LLM backend = **offline mock** (no Anthropic key set); **synthetic data** only.
 - **Teardown (stops billing ~$0.07/hr):**
@@ -54,6 +59,10 @@ detector fallback (everything still passes).
   tests pass at once).
 - `FIN_ACCOUNT` is card-style only (keeps F-003 idempotency exact); medical patterns
   need a qualifier (dose/value/"Mellitus") so clean docs don't false-fire.
+- `PHI_MRN` matches hyphen-, space-, colon- and hash-separated labels (`MRN-7293847`,
+  `MRN 884211`, `MRN: …`, `MRN# …`), capturing the `MRN` label into the token (matches
+  the golden contract); space form requires 3+ digits to avoid false fires. The
+  `/run` `obfuscated_preview` surfaced the original hyphen-only gap during the UI demo.
 - Two leak gates before any LLM call: vault-based + `residual_scan` (raw identifiers
   in payload). Fail closed (HTTP 422).
 - Key mgmt fails closed in production without a persistent master key

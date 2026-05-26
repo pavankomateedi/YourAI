@@ -42,6 +42,22 @@ class TestPIIDetector:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
+    async def test_detects_mrn_separator_formats(self):
+        """MRN labels appear hyphen-, space-, colon- and hash-separated in real
+        records; all must be detected so none leaks past the gate (regression)."""
+        try:
+            from secure_context_pipeline.detection.detector import PIIDetector
+            detector = PIIDetector()
+        except ImportError:
+            pytest.skip("PIIDetector not implemented")
+
+        for text in ["MRN-7293847", "MRN 884211", "MRN: 884211", "MRN# 884211", "MRN #884211"]:
+            entities = await detector.detect(f"Patient record, {text}, admitted today.")
+            mrn = [e for e in entities if e.entity_type == "PHI_MRN"]
+            assert mrn, f"MRN not detected in: '{text}'"
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
     async def test_no_pii_document_returns_empty(self, fixture_text_no_pii):
         try:
             from secure_context_pipeline.detection.detector import PIIDetector

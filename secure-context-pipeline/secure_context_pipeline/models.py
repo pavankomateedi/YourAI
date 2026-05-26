@@ -108,6 +108,11 @@ class PipelineResult:
     pipeline_duration_ms: float
     document_id: str | None = None
     audit_event_ids: list[str] = field(default_factory=list)
+    # Demo/observability only — both contain zero recoverable PII (tokens/pseudonyms).
+    # ``obfuscated_preview`` is exactly what crosses the trust boundary to the LLM;
+    # ``llm_raw_response`` is the provider reply before de-obfuscation.
+    obfuscated_preview: str | None = None
+    llm_raw_response: str | None = None
 
 
 @dataclass
