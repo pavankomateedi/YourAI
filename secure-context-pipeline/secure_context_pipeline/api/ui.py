@@ -15,31 +15,33 @@ INDEX_HTML = r"""<!doctype html>
 <title>YourAI Vault — Secure File Transfer for AI</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg:#070b1a; --panel:#0f1530; --panel-2:#141b3a; --border:#1f2747;
-    --border-soft:#171f3e;
-    --text:#eef1f8; --muted:#8a93b3; --muted-2:#5e6789;
-    --gold:#c4a661; --gold-soft:rgba(196,166,97,.12);
-    --blue:#5a93ff; --blue-soft:rgba(90,147,255,.12);
-    --ok:#3fb950; --warn:#d29922; --err:#f15d57; --working:#5a93ff;
+    --bg:#070905; --panel:#10140c; --panel-2:#171c12; --border:#2a311e;
+    --border-soft:#1f2418;
+    --text:#eef0e5; --muted:#9aa087; --muted-2:#6c7458;
+    --olive:#9bb04a; --olive-deep:#6e8035; --olive-soft:rgba(155,176,74,.12);
+    --cream:#d4c79a; --cream-soft:rgba(212,199,154,.10);
+    --ok:#7fbf3f; --warn:#d2a922; --err:#e26b65; --working:#9bb04a;
     --radius:10px;
-    --shadow: 0 1px 0 rgba(255,255,255,.03) inset, 0 18px 60px rgba(0,0,0,.45);
+    --shadow: 0 1px 0 rgba(255,255,255,.03) inset, 0 18px 60px rgba(0,0,0,.55);
   }
   * { box-sizing:border-box; }
   body { margin:0; background:
-    radial-gradient(1200px 600px at 80% -20%, rgba(196,166,97,.06), transparent 60%),
-    radial-gradient(900px 600px at -10% 30%, rgba(90,147,255,.05), transparent 60%),
+    radial-gradient(1200px 600px at 80% -20%, rgba(155,176,74,.07), transparent 60%),
+    radial-gradient(900px 600px at -10% 30%, rgba(212,199,154,.04), transparent 60%),
     var(--bg);
     color:var(--text);
-    font:15px/1.6 "Inter",ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif; }
-  h1, h2.serif { font-family:"Cormorant Garamond",Georgia,serif; font-weight:600; letter-spacing:.01em; }
+    font:15px/1.62 "Manrope",ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased; }
+  h1, h2.serif { font-family:"Fraunces",Georgia,serif; font-weight:500;
+    letter-spacing:-.01em; font-optical-sizing:auto; }
 
   /* HEADER */
   header { padding:18px 32px; border-bottom:1px solid var(--border-soft);
     display:flex; align-items:center; gap:18px; flex-wrap:wrap;
-    background:linear-gradient(180deg,rgba(15,21,48,.9),rgba(7,11,26,0)); }
+    background:linear-gradient(180deg,rgba(16,20,12,.92),rgba(7,9,5,0)); }
   .brand { display:flex; align-items:center; gap:10px; }
   .brand .crest { font-size:22px; }
   .brand h1 { font-size:22px; margin:0; }
@@ -48,8 +50,11 @@ INDEX_HTML = r"""<!doctype html>
   .hdr-stats b { color:var(--text); font-size:15px; margin-left:6px; }
   .hdr-stats .sep { width:1px; height:18px; background:var(--border); }
   #cog { background:none; border:1px solid var(--border); color:var(--muted-2); border-radius:8px;
-    width:34px; height:34px; cursor:pointer; }
+    width:34px; height:34px; cursor:pointer; position:relative; }
   #cog:hover { color:var(--text); border-color:var(--border); }
+  #cog.needs-key::after { content:""; position:absolute; top:-3px; right:-3px;
+    width:9px; height:9px; border-radius:50%; background:var(--err);
+    box-shadow:0 0 0 2px var(--bg); animation:pulse 1.6s infinite; }
 
   /* SETTINGS DRAWER */
   #settings { display:none; padding:18px 32px; border-bottom:1px solid var(--border-soft);
@@ -64,13 +69,13 @@ INDEX_HTML = r"""<!doctype html>
   @media (max-width:1080px){ main { grid-template-columns:1fr; } }
   .left { padding:34px 40px; border-right:1px solid var(--border-soft); overflow:auto; }
   .right { padding:30px 28px; overflow:auto;
-    background:linear-gradient(180deg,var(--panel),rgba(15,21,48,.4)); }
+    background:linear-gradient(180deg,var(--panel),rgba(7,9,5,.55)); }
 
   /* CARDS / TYPOGRAPHY */
   .lead { color:var(--muted); font-size:14px; max-width:64ch; margin:0 0 18px; }
   .section { margin:28px 0; }
   .section > h2 { font-size:20px; margin:0 0 4px; }
-  .section > h2 small { color:var(--muted); font-size:12px; font-family:Inter,sans-serif;
+  .section > h2 small { color:var(--muted); font-size:12px; font-family:Manrope,sans-serif;
     font-weight:500; margin-left:10px; letter-spacing:.04em; text-transform:uppercase; }
   .section > .hint { color:var(--muted); font-size:13px; margin:0 0 14px; }
 
@@ -80,27 +85,27 @@ INDEX_HTML = r"""<!doctype html>
   input, textarea, select, button {
     background:var(--panel); color:var(--text); border:1px solid var(--border);
     border-radius:8px; padding:11px 13px; font:inherit; }
-  input:focus, textarea:focus, select:focus { outline:none; border-color:var(--gold); }
+  input:focus, textarea:focus, select:focus { outline:none; border-color:var(--olive); }
   textarea { width:100%; min-height:160px; resize:vertical; font-size:13.5px;
-    line-height:1.55; font-family:"Inter",sans-serif; }
+    line-height:1.55; font-family:"Manrope",sans-serif; }
   button { cursor:pointer; transition:transform .04s ease, border-color .15s, color .15s, background .15s; }
   button:active { transform:translateY(1px); }
   button:disabled { opacity:.4; cursor:not-allowed; }
-  button.primary { background:var(--gold); border-color:var(--gold); color:#1a1303;
+  button.primary { background:var(--olive); border-color:var(--olive); color:#1a1303;
     font-weight:600; padding:13px 22px; font-size:14.5px; }
-  button.primary:hover:not(:disabled) { background:#d6b66c; }
+  button.primary:hover:not(:disabled) { background:#b6cd5e; }
   button.ghost { background:transparent; color:var(--text); }
-  button.ghost:hover:not(:disabled) { border-color:var(--gold); color:var(--gold); }
+  button.ghost:hover:not(:disabled) { border-color:var(--olive); color:var(--olive); }
   button.danger { background:transparent; border-color:#5a2a2a; color:#ff7b72; }
   button.danger:hover:not(:disabled) { background:rgba(255,123,114,.08); }
-  button.linkish { background:none; border:none; color:var(--blue); padding:4px 0; }
+  button.linkish { background:none; border:none; color:var(--cream); padding:4px 0; }
 
   /* VAULT STATUS HERO */
   .hero { background:var(--panel); border:1px solid var(--border); border-radius:14px;
     padding:24px 26px; box-shadow:var(--shadow); display:flex; align-items:center; gap:22px; flex-wrap:wrap; }
   .hero .lock { font-size:34px; }
   .hero .copy { flex:1; min-width:240px; }
-  .hero h2 { margin:0; font-size:19px; font-family:Cormorant Garamond,Georgia,serif; }
+  .hero h2 { margin:0; font-size:19px; font-family:Fraunces,Georgia,serif; }
   .hero p { margin:4px 0 0; color:var(--muted); font-size:13.5px; }
   .hero.open  { border-color:rgba(63,185,80,.4); }
   .hero.open  .lock { color:var(--ok); }
@@ -134,11 +139,11 @@ INDEX_HTML = r"""<!doctype html>
     font-family:ui-monospace,Menlo,Consolas,monospace; font-size:12.5px; min-height:70px;
     color:#dde3ee; }
   .card.boundary { border-color:rgba(90,147,255,.35); }
-  .card.boundary h3 { color:#9ec1ff; }
+  .card.boundary h3 { color:var(--cream); }
   .badge { font-size:9.5px; padding:2px 7px; border-radius:10px;
     border:1px solid var(--border); color:var(--muted-2); text-transform:uppercase; letter-spacing:.06em; }
-  .badge.leaves { background:var(--blue-soft); color:#9ec1ff; border-color:rgba(90,147,255,.5); }
-  .tok { color:var(--gold); background:var(--gold-soft); border-radius:3px; padding:0 2px; }
+  .badge.leaves { background:var(--cream-soft); color:var(--cream); border-color:rgba(212,199,154,.45); }
+  .tok { color:var(--olive); background:var(--olive-soft); border-radius:3px; padding:0 2px; }
   .runstats { display:flex; gap:20px; flex-wrap:wrap; margin-top:14px; color:var(--muted); font-size:12.5px; }
   .runstats b { color:var(--text); font-size:14px; }
 
@@ -180,13 +185,13 @@ INDEX_HTML = r"""<!doctype html>
   .lvl-info     { }
   .lvl-working  { border-color:rgba(90,147,255,.35); }
   .lvl-working .tl-icon  { border-color:var(--working); animation: pulse 1.6s infinite; }
-  @keyframes pulse { 50% { box-shadow:0 0 0 3px rgba(90,147,255,.18); } }
+  @keyframes pulse { 50% { box-shadow:0 0 0 3px rgba(155,176,74,.22); } }
   .lvl-warn     { border-color:rgba(210,153,34,.4); }
   .lvl-warn .tl-icon     { border-color:var(--warn); }
   .lvl-err      { border-color:rgba(241,93,87,.5); background:rgba(241,93,87,.06); }
   .lvl-err .tl-icon      { border-color:var(--err); }
   .lvl-vault    { border-color:rgba(196,166,97,.4); }
-  .lvl-vault .tl-icon { border-color:var(--gold); }
+  .lvl-vault .tl-icon { border-color:var(--olive); }
   .tl-empty { color:var(--muted-2); font-size:13px; padding:20px 0; text-align:center;
     border:1px dashed var(--border-soft); border-radius:8px; }
 
@@ -368,7 +373,7 @@ INDEX_HTML = r"""<!doctype html>
     <div class="legend">
       <span class="item"><span class="dot" style="color:var(--ok)"></span> Done</span>
       <span class="item"><span class="dot" style="color:var(--working)"></span> In progress</span>
-      <span class="item"><span class="dot" style="color:var(--gold)"></span> Vault event</span>
+      <span class="item"><span class="dot" style="color:var(--olive)"></span> Vault event</span>
       <span class="item"><span class="dot" style="color:var(--err)"></span> Stopped / error</span>
     </div>
   </aside>
@@ -550,9 +555,20 @@ $("file").addEventListener("change", e => {
 // === actions ===
 $("btn-open").onclick = async () => {
   setErr("");
+  if (!apiKey()) {
+    $("settings").classList.add("open");
+    $("apikey").focus();
+    setErr("Enter your Vault access key above, then click Open vault. (See the ⚙ panel.)");
+    return;
+  }
   try {
     const r = await fetch("/sessions", { method:"POST", headers: baseHeaders(),
       body: JSON.stringify({ user_id: userId() }) });
+    if (r.status === 401) {
+      $("settings").classList.add("open");
+      $("apikey").focus();
+      throw new Error("That Vault access key was rejected. Check the ⚙ Settings panel and try again.");
+    }
     if (!r.ok) throw new Error(`Could not open vault — ${r.status} ${await r.text()}`);
     const j = await r.json();
     STATE.sessionId = j.session_id;
@@ -563,6 +579,15 @@ $("btn-open").onclick = async () => {
     setVaultState(true);
   } catch (e) { setErr(e.message); }
 };
+
+// Persist the vault key for this browser session so it's not re-typed on every action.
+function refreshKeyHint() {
+  $("cog").classList.toggle("needs-key", !apiKey());
+}
+$("apikey").addEventListener("input", () => {
+  sessionStorage.setItem("scp.apikey", apiKey());
+  refreshKeyHint();
+});
 
 $("btn-deposit").onclick = async () => {
   setErr("");
@@ -677,6 +702,13 @@ $("cog").onclick = () => $("settings").classList.toggle("open");
 
 // === restore on reload ===
 (function restore() {
+  const savedKey = sessionStorage.getItem("scp.apikey");
+  if (savedKey) $("apikey").value = savedKey;
+  refreshKeyHint();
+  // First-run nudge: if no key entered, open the settings drawer so the field
+  // is right there. The user doesn't have to hunt for the cog.
+  if (!apiKey()) $("settings").classList.add("open");
+
   const sid = sessionStorage.getItem("scp.session");
   if (sid) {
     STATE.sessionId = sid;
