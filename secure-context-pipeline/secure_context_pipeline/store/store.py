@@ -98,6 +98,42 @@ class SecureDocumentStore:
             if os.path.exists(path):
                 await asyncio.to_thread(os.remove, path)
 
+    async def list_documents(self, user_id: str) -> list[dict]:
+        """List documents readable by the user. Documents are not tagged with a
+        user id at rest (per-user keys are the access control); this lists every
+        ``*.enc`` whose meta we can read and decryption with the user's key
+        succeeds. Returns ``[{document_id, mime_type, bytes}]``."""
+        def _scan() -> list[dict]:
+            if not os.path.isdir(self._base_path):
+                return []
+            out: list[dict] = []
+            key = self._user_key(user_id)
+            for name in os.listdir(self._base_path):
+                if not name.endswith(".enc"):
+                    continue
+                doc_id = name[:-4]
+                meta_p = self._meta_path(doc_id)
+                enc_p = self._enc_path(doc_id)
+                if not os.path.exists(meta_p):
+                    continue
+                try:
+                    with open(meta_p, encoding="utf-8") as fh:
+                        meta = json.load(fh)
+                    with open(enc_p, "rb") as fh:
+                        blob = fh.read()
+                    AESGCM(key).decrypt(blob[:_NONCE_BYTES], blob[_NONCE_BYTES:], None)
+                except Exception:
+                    # Wrong user key (InvalidTag), corrupt blob, or unreadable meta — skip.
+                    continue
+                out.append({
+                    "document_id": doc_id,
+                    "mime_type": meta.get("mime_type", "application/octet-stream"),
+                    "bytes": max(0, len(blob) - _NONCE_BYTES - 16),  # minus nonce + GCM tag
+                })
+            return out
+
+        return await asyncio.to_thread(_scan)
+
     async def extract_text(self, user_id: str, doc_id: str) -> str:
         content = await self.retrieve(user_id, doc_id)
         meta = await self._read_meta(doc_id)

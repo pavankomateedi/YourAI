@@ -31,6 +31,7 @@ from ..obfuscation.strategies import (
     TokenizationStrategy,
 )
 from ..vault.vault import SessionVault
+from .events import EventBus
 from .exceptions import PIILeakError
 from .injector import LLMContextInjector
 from .residual_scan import find_residual_pii
@@ -67,6 +68,7 @@ class SecureContextPipeline:
         provider: str | None = None,
         strategy: str = ObfuscationStrategyType.TOKENIZATION.value,
         max_chunk_chars: int = 12000,
+        event_bus: EventBus | None = None,
     ) -> None:
         self._llm_fn = llm_fn
         self._audit = audit_log
@@ -81,6 +83,12 @@ class SecureContextPipeline:
         self._deobf_engine = DeobfuscationEngine()
         self._provider = provider or get_settings().llm_provider
         self._injector = LLMContextInjector(provider=self._provider)
+        self._events = event_bus
+
+    def _emit(self, session_id: str, event_type: str, **data) -> None:
+        """Fire-and-forget event for the UI timeline; no-op if no bus attached."""
+        if self._events is not None:
+            self._events.publish(session_id, event_type, data)
 
     # ------------------------------------------------------------- session
     async def create_session(self, user_id: str | None = None) -> str:
@@ -110,80 +118,107 @@ class SecureContextPipeline:
         provider: str | None = None,
     ) -> PipelineResult:
         start = time.perf_counter()
-        await self._vault.create_session(session_id)
+        self._emit(session_id, "pipeline.started",
+                   document_id=document_id, has_inline_text=text is not None,
+                   chars=(len(text) if text else 0))
+        try:
+            await self._vault.create_session(session_id)
 
-        if text is None:
-            if document_id is None or self._store is None:
-                raise ValueError("Provide either `text` or a `document_id` with a store")
-            text = await self._store.extract_text(user_id, document_id)
-        text = text or ""
+            if text is None:
+                if document_id is None or self._store is None:
+                    raise ValueError("Provide either `text` or a `document_id` with a store")
+                text = await self._store.extract_text(user_id, document_id)
+            text = text or ""
 
-        engine = self._obf_engine
-        if strategy and strategy != self._strategy:
-            engine = ObfuscationEngine(_build_strategy_map(strategy))
-        strat_name = strategy or self._strategy
+            engine = self._obf_engine
+            if strategy and strategy != self._strategy:
+                engine = ObfuscationEngine(_build_strategy_map(strategy))
+            strat_name = strategy or self._strategy
 
-        # detect -> obfuscate. For large documents, process chunk-by-chunk against
-        # the shared vault so a value repeated across chunks maps to one token.
-        chunks = chunk_text(text, self._max_chunk_chars)
-        entities = []
-        obf_parts: list[str] = []
-        token_manifest: list[str] = []
-        for chunk in chunks:
-            chunk_entities = await self._detector.detect(chunk)
-            entities.extend(chunk_entities)
-            part = await engine.obfuscate_document(
-                chunk, chunk_entities, self._vault, session_id, strat_name
-            )
-            obf_parts.append(part.obfuscated_text)
-            token_manifest.extend(part.token_manifest)
-        obfuscated_text = "".join(obf_parts)
-
-        # audit each obfuscated (non-redacted) entity — token id + type only, no value
-        obfuscated_count = 0
-        if self._audit is not None:
+            # detect -> obfuscate. For large documents, process chunk-by-chunk against
+            # the shared vault so a value repeated across chunks maps to one token.
+            chunks = chunk_text(text, self._max_chunk_chars)
+            self._emit(session_id, "pipeline.detecting", chunks=len(chunks), chars=len(text))
+            entities = []
+            obf_parts: list[str] = []
+            token_manifest: list[str] = []
+            for chunk in chunks:
+                chunk_entities = await self._detector.detect(chunk)
+                entities.extend(chunk_entities)
+                part = await engine.obfuscate_document(
+                    chunk, chunk_entities, self._vault, session_id, strat_name
+                )
+                obf_parts.append(part.obfuscated_text)
+                token_manifest.extend(part.token_manifest)
+            obfuscated_text = "".join(obf_parts)
+            by_type: dict[str, int] = {}
             for e in entities:
-                if e.confidence < CONFIDENCE_THRESHOLD:
-                    continue
-                token = await self._vault.lookup_by_original(session_id, e.entity_type, e.original_value)
-                if token:
-                    obfuscated_count += 1
-                    await self._audit.log_obfuscation(
-                        session_id=session_id, user_id=user_id, entity_type=e.entity_type,
-                        token_id=token, document_id=document_id,
-                        strategy_used=strat_name, confidence_score=e.confidence,
-                    )
-        else:
-            obfuscated_count = len(token_manifest)
+                by_type[e.entity_type] = by_type.get(e.entity_type, 0) + 1
+            self._emit(session_id, "pipeline.detected",
+                       entities_count=len(entities), by_type=by_type)
+            self._emit(session_id, "pipeline.obfuscated",
+                       tokens_count=len(token_manifest), strategy=strat_name)
 
-        # leak gate + LLM call
-        raw_response = await self._call_llm_with_leak_check(
-            obfuscated_context=obfuscated_text,
-            user_query=user_query,
-            vault=self._vault,
-            session_id=session_id,
-            known_pii_values=None,
-            user_id=user_id,
-            provider=provider,
-        )
+            # audit each obfuscated (non-redacted) entity — token id + type only, no value
+            obfuscated_count = 0
+            if self._audit is not None:
+                for e in entities:
+                    if e.confidence < CONFIDENCE_THRESHOLD:
+                        continue
+                    token = await self._vault.lookup_by_original(session_id, e.entity_type, e.original_value)
+                    if token:
+                        obfuscated_count += 1
+                        await self._audit.log_obfuscation(
+                            session_id=session_id, user_id=user_id, entity_type=e.entity_type,
+                            token_id=token, document_id=document_id,
+                            strategy_used=strat_name, confidence_score=e.confidence,
+                        )
+            else:
+                obfuscated_count = len(token_manifest)
 
-        # de-obfuscate
-        deob = await self._deobf_engine.deobfuscate(
-            raw_response, self._vault, session_id, user_id=user_id, audit_log=self._audit
-        )
+            # leak gate + LLM call (emits gate.checking/passed and llm.calling/responded inside)
+            raw_response = await self._call_llm_with_leak_check(
+                obfuscated_context=obfuscated_text,
+                user_query=user_query,
+                vault=self._vault,
+                session_id=session_id,
+                known_pii_values=None,
+                user_id=user_id,
+                provider=provider,
+            )
 
-        return PipelineResult(
-            session_id=session_id,
-            user_query=user_query,
-            restored_response=deob.restored_text,
-            entities_detected=len(entities),
-            entities_obfuscated=obfuscated_count,
-            tokens_restored=deob.tokens_restored,
-            pipeline_duration_ms=(time.perf_counter() - start) * 1000,
-            document_id=document_id,
-            obfuscated_preview=obfuscated_text,
-            llm_raw_response=raw_response,
-        )
+            # de-obfuscate
+            self._emit(session_id, "pipeline.restoring")
+            deob = await self._deobf_engine.deobfuscate(
+                raw_response, self._vault, session_id, user_id=user_id, audit_log=self._audit
+            )
+            self._emit(session_id, "pipeline.restored", tokens_restored=deob.tokens_restored)
+
+            duration_ms = (time.perf_counter() - start) * 1000
+            self._emit(session_id, "pipeline.completed",
+                       entities_detected=len(entities),
+                       entities_obfuscated=obfuscated_count,
+                       tokens_restored=deob.tokens_restored,
+                       duration_ms=duration_ms)
+            return PipelineResult(
+                session_id=session_id,
+                user_query=user_query,
+                restored_response=deob.restored_text,
+                entities_detected=len(entities),
+                entities_obfuscated=obfuscated_count,
+                tokens_restored=deob.tokens_restored,
+                pipeline_duration_ms=duration_ms,
+                document_id=document_id,
+                obfuscated_preview=obfuscated_text,
+                llm_raw_response=raw_response,
+            )
+        except PIILeakError as e:
+            # gate_aborted already emitted inside _call_llm_with_leak_check; re-raise.
+            raise
+        except Exception as e:
+            self._emit(session_id, "pipeline.failed",
+                       error=type(e).__name__, message=str(e))
+            raise
 
     # ----------------------------------------------------------- leak gate
     async def _call_llm_with_leak_check(
@@ -197,6 +232,7 @@ class SecureContextPipeline:
         provider: str | None = None,
     ) -> str:
         payload_text = f"{obfuscated_context} {user_query}"
+        self._emit(session_id, "pipeline.gate_checking", payload_chars=len(payload_text))
         # Gate 1: scan against values the detector found (the session vault).
         leaked_type = await self._scan_for_leak(payload_text, vault, session_id, known_pii_values)
         # Gate 2 (defense in depth): scan the payload itself for raw structured
@@ -204,23 +240,35 @@ class SecureContextPipeline:
         if leaked_type is None:
             leaked_type = find_residual_pii(payload_text)
         if leaked_type is not None:
+            self._emit(session_id, "pipeline.gate_aborted",
+                       entity_type=leaked_type, stage="pre_llm_call")
             if self._audit is not None:
                 await self._audit.log_pii_leak_detected(
                     session_id=session_id, user_id=user_id,
                     entity_type=leaked_type, stage="pre_llm_call",
                 )
             raise PIILeakError(entity_type=leaked_type, stage="pre_llm_call")
+        self._emit(session_id, "pipeline.gate_passed")
 
+        llm_start = time.perf_counter()
+        self._emit(session_id, "pipeline.llm_calling",
+                   provider=(provider or self._provider))
         if self._llm_fn is not None:
             result = self._llm_fn(obfuscated_context, user_query)
             if inspect.isawaitable(result):
                 result = await result
+            self._emit(session_id, "pipeline.llm_responded",
+                       duration_ms=(time.perf_counter() - llm_start) * 1000,
+                       chars=len(result or ""))
             return result
 
         # No injected llm_fn: assemble a payload and call the real provider
         # (Anthropic by default, with an offline echo fallback inside the injector).
         built = await self._injector.build_payload(obfuscated_context, user_query, session_id)
         response = await self._injector.call_llm(built, provider=provider)
+        self._emit(session_id, "pipeline.llm_responded",
+                   duration_ms=(time.perf_counter() - llm_start) * 1000,
+                   chars=len(response.raw_response or ""))
         return response.raw_response
 
     async def _scan_for_leak(
