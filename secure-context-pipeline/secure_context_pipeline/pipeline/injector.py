@@ -97,8 +97,84 @@ class LLMContextInjector:
 
     @staticmethod
     def _mock_response(payload: LLMContextPayload) -> str:
-        tokens = _TOKEN_RE.findall(payload.obfuscated_context)
-        if tokens:
-            joined = ", ".join(tokens)
-            return f"Based on the document, the relevant entities are: {joined}."
-        return "Based on the document, no sensitive entities were referenced."
+        """Deterministic, entity-aware templated summary.
+
+        Real Claude generates the natural-language summary in production. With no
+        API key set, this mock infers the document genre from the token mix
+        (medical / legal / financial / mixed) and emits a plausible summary that
+        embeds the bracketed tokens — so de-obfuscation can still restore them to
+        real values and the demo's restored panel reads like a real summary."""
+        text = payload.obfuscated_context or ""
+        # Group bracketed tokens by their type prefix (e.g. ``PHI_MRN``) while
+        # preserving first-seen order within each type.
+        by_type: dict[str, list[str]] = {}
+        seen: set[str] = set()
+        for m in _TOKEN_RE.finditer(text):
+            tok = m.group(0)
+            if tok in seen:
+                continue
+            seen.add(tok)
+            inner = tok[1:-1]
+            parts = inner.split("_")
+            prefix = "_".join(parts[:2]) if len(parts) >= 3 else parts[0]
+            by_type.setdefault(prefix, []).append(tok)
+
+        if not by_type:
+            return ("Looking at the document, I see no sensitive identifiers or "
+                    "personal information to flag. The content reads as a general "
+                    "summary with no individual records.")
+
+        name = (by_type.get("PII_NAME") or [None])[0]
+        has_phi = any(k.startswith("PHI_") for k in by_type)
+        has_legal = any(k.startswith("LEG_") for k in by_type)
+        has_financial = any(k in by_type for k in ("FIN_ACCOUNT", "FIN_TAX_ID"))
+
+        out: list[str] = []
+        if has_phi:
+            who = f" for {name}" if name else ""
+            out.append(f"This appears to be a medical record{who}.")
+            if "PHI_DIAGNOSIS" in by_type:
+                out.append(
+                    f"The patient's documented condition is {', '.join(by_type['PHI_DIAGNOSIS'])}."
+                )
+            if "PHI_MEDICATION" in by_type:
+                out.append(
+                    f"Prescribed medications include {', '.join(by_type['PHI_MEDICATION'])}."
+                )
+            if "PHI_LAB_RESULT" in by_type:
+                out.append(
+                    f"Recent lab results on file: {', '.join(by_type['PHI_LAB_RESULT'])}."
+                )
+            if "PHI_MRN" in by_type:
+                out.append(f"Medical record number on file: {by_type['PHI_MRN'][0]}.")
+            if "PHI_INSURANCE_ID" in by_type:
+                out.append(f"Insurance reference: {by_type['PHI_INSURANCE_ID'][0]}.")
+        elif has_legal:
+            who = f" involving {name}" if name else ""
+            out.append(f"This is a legal matter{who}.")
+            if "LEG_CLIENT" in by_type:
+                out.append(f"Client of record: {by_type['LEG_CLIENT'][0]}.")
+            if "LEG_STRATEGY" in by_type:
+                out.append(f"Litigation strategy noted: {by_type['LEG_STRATEGY'][0]}.")
+        elif has_financial:
+            who = f" for {name}" if name else ""
+            out.append(f"This is a financial disclosure{who}.")
+            if "FIN_ACCOUNT" in by_type:
+                out.append(f"Primary account referenced: {by_type['FIN_ACCOUNT'][0]}.")
+            if "FIN_TAX_ID" in by_type:
+                out.append(f"Tax identifier on file: {by_type['FIN_TAX_ID'][0]}.")
+        else:
+            who = f"about {name}" if name else "with personal information"
+            out.append(f"The document is {who}.")
+
+        # Identity + contact addenda — useful in every genre when present.
+        if "PII_SSN" in by_type:
+            out.append(f"Identity number referenced: {by_type['PII_SSN'][0]}.")
+        if "PII_DOB" in by_type:
+            out.append(f"Date of birth: {by_type['PII_DOB'][0]}.")
+        contacts = (by_type.get("PII_EMAIL", []) + by_type.get("PII_PHONE", []))[:2]
+        if contacts:
+            out.append(f"Contact details listed: {', '.join(contacts)}.")
+        if "PII_ADDRESS" in by_type:
+            out.append(f"Address on file: {by_type['PII_ADDRESS'][0]}.")
+        return " ".join(out)

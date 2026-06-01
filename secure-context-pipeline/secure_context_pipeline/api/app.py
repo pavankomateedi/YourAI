@@ -49,9 +49,10 @@ from ..store.store import SecureDocumentStore
 def create_app():
     """Build and return the FastAPI application."""
     from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, Query, UploadFile
-    from fastapi.responses import HTMLResponse, StreamingResponse
+    from fastapi.responses import HTMLResponse, PlainTextResponse, StreamingResponse
     from pydantic import BaseModel
 
+    from .samples import SAMPLES
     from .ui import INDEX_HTML
 
     settings = get_settings()
@@ -94,6 +95,25 @@ def create_app():
     @app.get("/ui", response_class=HTMLResponse)
     async def ui() -> str:
         return INDEX_HTML
+
+    @app.get("/samples")
+    async def list_samples() -> dict:
+        """Public list of bundled synthetic documents the demo UI can use."""
+        return {"samples": [
+            {"id": k, "name": v[0], "mime": v[1], "bytes": len(v[2]),
+             "title": k.title()}
+            for k, v in SAMPLES.items()
+        ]}
+
+    @app.get("/samples/{sample_id}", response_class=PlainTextResponse)
+    async def get_sample(sample_id: str):
+        if sample_id not in SAMPLES:
+            raise HTTPException(status_code=404, detail="No such sample")
+        filename, mime, body = SAMPLES[sample_id]
+        return PlainTextResponse(
+            body, media_type=mime,
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
 
     @app.get("/health")
     async def health() -> dict:
